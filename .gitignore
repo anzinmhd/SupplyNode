@@ -1,0 +1,28 @@
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Output files
+outputs/alerts/
+
+# Mac system files
+.DS_Store
+
+# VS Code
+.vscode/
+
+# Test cache
+.pytest_cache/
+
+# Distribution
+dist/
+build/
+*.egg-info/
