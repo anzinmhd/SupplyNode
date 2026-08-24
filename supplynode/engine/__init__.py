@@ -7,7 +7,8 @@ from .kpi_engine import (
     compute_carrying_cost_pct,
     compute_order_fill_rate_pct,
     compute_forecast_accuracy,
-    compute_eoq
+    compute_eoq,
+    compute_all_kpi
 )
 
 __all__ = ["compute_days_of_supply",
@@ -18,4 +19,5 @@ __all__ = ["compute_days_of_supply",
     "compute_carrying_cost_pct",
     "compute_order_fill_rate_pct",
     "compute_forecast_accuracy",
-    "compute_eoq"]
+    "compute_eoq",
+    "compute_all_kpi"]
