@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import date
 
-def deadstock_detection(sku_results: dict, inventory_data: pd.DataFrame) -> dict:
+def deadstock_detection(kpi_results: dict, inventory_data: pd.DataFrame) -> dict:
     """
     Detect dead stock and slow-moving inventory risks for each SKU.
 
@@ -16,7 +16,7 @@ def deadstock_detection(sku_results: dict, inventory_data: pd.DataFrame) -> dict
         - ITR >= 4 : Normal    — healthy turnover, no action needed
 
     Args:
-        sku_results: Dictionary containing KPI results for each SKU,
+        kpi_results: Dictionary containing KPI results for each SKU,
             including inventory turnover ratio and carrying cost percentage.
         inventory_data: DataFrame containing SKU details such as SKU name,
             current stock, unit cost, and last purchase date.
@@ -31,18 +31,18 @@ def deadstock_detection(sku_results: dict, inventory_data: pd.DataFrame) -> dict
     
     dead_count = slow_moving_count = high_count = 0
 
-    for sku in sku_results:
+    for sku in kpi_results:
     
         sku_details = inventory_data[inventory_data["sku_id"] == sku]
         last_purchase = pd.to_datetime(sku_details["last_purchase_date"].item()).date()
         days_held = (date.today() - last_purchase).days
 
-        if sku_results[sku]["itr"] < 1:
+        if kpi_results[sku]["itr"] < 1:
             results["findings"].append({"sku_id": sku,
                                         "sku_name": sku_details["sku_name"].item(),
-                                        "inventory_turnover_ratio": sku_results[sku]["itr"],
-                                        "carrying_cost_percentage": sku_results[sku]["ccp"],
-                                        "carrying_cost": sku_details["current_stock"].item() * sku_details["unit_cost"].item() * (sku_results[sku]["ccp"] / 100) 
+                                        "inventory_turnover_ratio": kpi_results[sku]["itr"],
+                                        "carrying_cost_percentage": kpi_results[sku]["ccp"],
+                                        "carrying_cost": sku_details["current_stock"].item() * sku_details["unit_cost"].item() * (kpi_results[sku]["ccp"] / 100) 
                                         * (days_held / 365),
                                         "risk_level": "critical"
             })
@@ -54,12 +54,12 @@ def deadstock_detection(sku_results: dict, inventory_data: pd.DataFrame) -> dict
             })
             dead_count +=1
 
-        elif sku_results[sku]["itr"] < 2:
+        elif kpi_results[sku]["itr"] < 2:
             results["findings"].append({"sku_id": sku,
                                         "sku_name": sku_details["sku_name"].item(),
-                                        "inventory_turnover_ratio": sku_results[sku]["itr"],
-                                        "carrying_cost_percentage": sku_results[sku]["ccp"],
-                                        "carrying_cost": sku_details["current_stock"].item() * sku_details["unit_cost"].item() * (sku_results[sku]["ccp"] / 100) 
+                                        "inventory_turnover_ratio": kpi_results[sku]["itr"],
+                                        "carrying_cost_percentage": kpi_results[sku]["ccp"],
+                                        "carrying_cost": sku_details["current_stock"].item() * sku_details["unit_cost"].item() * (kpi_results[sku]["ccp"] / 100) 
                                         * (days_held / 365),
                                         "risk_level": "high"
             }) 
@@ -71,12 +71,12 @@ def deadstock_detection(sku_results: dict, inventory_data: pd.DataFrame) -> dict
             })
             high_count += 1
 
-        elif sku_results[sku]["itr"] < 4:
+        elif kpi_results[sku]["itr"] < 4:
             results["findings"].append({"sku_id": sku,
                                         "sku_name": sku_details["sku_name"].item(),
-                                        "inventory_turnover_ratio": sku_results[sku]["itr"],
-                                        "carrying_cost_percentage": sku_results[sku]["ccp"],
-                                        "carrying_cost": sku_details["current_stock"].item() * sku_details["unit_cost"].item() * (sku_results[sku]["ccp"] / 100) 
+                                        "inventory_turnover_ratio": kpi_results[sku]["itr"],
+                                        "carrying_cost_percentage": kpi_results[sku]["ccp"],
+                                        "carrying_cost": sku_details["current_stock"].item() * sku_details["unit_cost"].item() * (kpi_results[sku]["ccp"] / 100) 
                                         * (days_held / 365),
                                         "risk_level": "medium"
             }) 
