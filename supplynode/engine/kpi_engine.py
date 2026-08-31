@@ -89,13 +89,13 @@ def compute_all_kpi(inventory_data: pd.DataFrame, suppliers_data: pd.DataFrame, 
         - order_fill_rate_pct    : Requires procurement/supply sheet
         - forecast_accuracy      : Requires demand forecast module
     """
-    results = {}
+    kpi_results = {}
     total_inventory_value = (inventory_data["current_stock"] * inventory_data["unit_cost"]).sum()
     threshold = 90 # For deadstock ratio
 
     for _, row in inventory_data.iterrows():
         sku = row["sku_id"]
-        results[sku] = {}
+        kpi_results[sku] = {}
 
         sku_avg_inventory_value = (
             (row["current_stock"] * row["unit_cost"]) + 
@@ -107,18 +107,18 @@ def compute_all_kpi(inventory_data: pd.DataFrame, suppliers_data: pd.DataFrame, 
         avg_lead_time = supplier["avg_lead_time_days"].iloc[0]
 
         # Days of supply
-        results[sku]["dos"] = compute_days_of_supply(row["current_stock"], row["avg_daily_demand"])
+        kpi_results[sku]["dos"] = compute_days_of_supply(row["current_stock"], row["avg_daily_demand"])
 
         # Stockout probability
-        results[sku]["sop"] = compute_stockout_probability(row["current_stock"], row["avg_daily_demand"], avg_lead_time)
+        kpi_results[sku]["sop"] = compute_stockout_probability(row["current_stock"], row["avg_daily_demand"], avg_lead_time)
 
         # Inventory turnover ratio
         cogs = sales_history_data[sales_history_data["sku_id"] == row["sku_id"]]["quantity_sold"].sum() * row["unit_cost"]
-        results[sku]["itr"] = compute_inventory_turnover_ratio(cogs, sku_avg_inventory_value)
+        kpi_results[sku]["itr"] = compute_inventory_turnover_ratio(cogs, sku_avg_inventory_value)
 
         # Dead stock ratio
         if sku_sales.empty:
-            results[sku]["dsr"] = None
+            kpi_results[sku]["dsr"] = None
         else:
             dead_stock_value = 0
             last_sale_date = pd.to_datetime(sku_sales["date"]).max().date()
@@ -126,15 +126,15 @@ def compute_all_kpi(inventory_data: pd.DataFrame, suppliers_data: pd.DataFrame, 
             if days_since_last_sale >= threshold:
                 dead_stock_value = row["current_stock"] * row["unit_cost"]
 
-            results[sku]["dsr"] = compute_dead_stock_ratio(dead_stock_value, total_inventory_value)
+            kpi_results[sku]["dsr"] = compute_dead_stock_ratio(dead_stock_value, total_inventory_value)
 
         # Reorder point
         safety_stock = .2 * row["avg_daily_demand"] * avg_lead_time
-        results[sku]["rop"] = compute_reorder_point(row["avg_daily_demand"], avg_lead_time, safety_stock)
+        kpi_results[sku]["rop"] = compute_reorder_point(row["avg_daily_demand"], avg_lead_time, safety_stock)
 
         # Carrying cost percentage
         carry_cost_rate = 0.25 # Hardcoded for v1
-        results[sku]["ccp"] = compute_carrying_cost_pct(sku_avg_inventory_value * carry_cost_rate, sku_avg_inventory_value)
+        kpi_results[sku]["ccp"] = compute_carrying_cost_pct(sku_avg_inventory_value * carry_cost_rate, sku_avg_inventory_value)
 
         # Order Fill Rate - will implement in V2
 
@@ -144,6 +144,6 @@ def compute_all_kpi(inventory_data: pd.DataFrame, suppliers_data: pd.DataFrame, 
         annual_demand = sku_sales["quantity_sold"].sum() * (365 / 30)
         order_cost = 500
         holding_cost = row["unit_cost"] * 0.25
-        results[sku]["eoq"] = compute_eoq(annual_demand, order_cost, holding_cost)
+        kpi_results[sku]["eoq"] = compute_eoq(annual_demand, order_cost, holding_cost)
 
-    return results
+    return kpi_results
