@@ -4,10 +4,10 @@ def reorder_optimization(stockout_results: dict, kpi_results: dict, inventory_da
     """
     Generate optimized reorder recommendations for SKUs flagged by the Stockout Prevention Engine.
 
-    Runs only on SKUs classified as critical or high risk by the stockout engine.
+    Processes only SKUs classified as critical or high risk by the stockout engine.
     Computes the optimal reorder quantity by combining EOQ with a safety stock buffer
-    based on supplier reliability. Selects the best available supplier and estimates
-    the total reorder cost in Indian Rupees.
+    based on supplier reliability. Identifies the supplier associated with the SKU and
+    estimates the total reorder cost in Indian Rupees.
 
     Reorder quantity formula:
         safety_stock = avg_daily_demand x avg_lead_time x (1 - reliability_score)
@@ -30,11 +30,10 @@ def reorder_optimization(stockout_results: dict, kpi_results: dict, inventory_da
 
     Returns:
         A structured dictionary containing the engine name, triggered status,
-        overall severity, findings with full reorder details per SKU,
-        and recommendations list.
+        overall severity, findings with full reorder details per SKU.
     """
 
-    results = {"engine_name": "reorder_optimization", "triggered": False, "severity": "normal", "findings": [], "recommendations": []}
+    results = {"engine_name": "reorder_optimization", "triggered": False, "severity": "normal", "findings": []}
 
     for finding in stockout_results["findings"]:
         
@@ -66,7 +65,7 @@ def reorder_optimization(stockout_results: dict, kpi_results: dict, inventory_da
             "reorder_point": kpi_results[finding["sku_id"]]["rop"]            
             })
 
-    results["triggered"] = len(results["findings"]) > 0 or len(results["recommendations"]) > 0
+    results["triggered"] = len(results["findings"]) > 0
 
     if results["triggered"]:
         results["severity"] = "critical"
