@@ -1,5 +1,7 @@
 import pandas as pd
 from typing import TypedDict, Dict, Any
+import anthropic
+from supplynode.utils.config import ANTHROPIC_API_KEY
 from langgraph.graph import StateGraph, END
 from ..engine import compute_all_kpi
 from .stockout_engine import stockout_prevention
@@ -42,6 +44,60 @@ def compute_composite_risk_score(stockout_findings: Dict[str, Any], deadstock_fi
         severity_map.get(reorder_findings.get("severity", "normal"), 0) * 0.2
     )
     return min(round(score, 1), 100)
+
+def generate_alert(state: SupplyNodeState) -> str:
+    """
+    Call Claude API to generate a plain-language inventory risk alert.
+
+    Synthesizes findings from all three engines into a concise,
+    actionable alert for a non-technical SME business owner.
+
+    Args:
+        state: The current SupplyNodeState containing all engine findings
+               and the computed composite risk score.
+
+    Returns:
+        A plain-language alert string in 4-part format:
+        SITUATION / ROOT CAUSE / ACTION / IMPACT
+    """
+    client = anthropic.Client(api_key=ANTHROPIC_API_KEY)
+    prompt = f"""You are SupplyNode, an AI supply chain analyst for an Indian SME.
+
+    Analyze the following inventory risk findings and generate a concise alert
+    for a non-technical business owner.
+
+    Risk Score: {state['composite_risk_score']}/100
+
+    Stockout Risks:
+    {state['stockout_findings']}
+
+    Dead Stock Detected:
+    {state['deadstock_findings']}
+
+    Reorder Recommendations:
+    {state['reorder_findings']}
+
+    Generate your response in EXACTLY this format:
+    SITUATION: [Most critical risk in 1 sentence]
+    ROOT CAUSE: [Why this is happening in 1 sentence]
+    ACTION: [Specific action with exact numbers and rupee amounts]
+    IMPACT: [What happens if ignored for 3 days]
+
+    Strict rules:
+    - Use Indian Rupees (Rs) for all amounts
+    - Use SKU names not codes
+    - Use exact quantities not ranges
+    - Total response must be under 80 words
+    - Write for someone with no technical background
+    - Be specific and direct"""
+
+    response = client.messages.create(
+        model="claude-sonnet-4-6",
+        max_tokens = 300,
+        messages = [{"role": "user", "content": prompt}]
+    )
+
+    return response.content[0].text
 
 def node_kpi(state: SupplyNodeState) -> SupplyNodeState:
     """
@@ -107,7 +163,7 @@ def node_orchestrator(state: SupplyNodeState) -> SupplyNodeState:
         state["deadstock_findings"],
         state["reorder_findings"]
     )
-    state["final_alert"] = "" # Implemented in commit 3
+    state["final_alert"] = generate_alert(state)
     state["alert_metadata"] = {} # Implemented in commit 4
     return state
 
