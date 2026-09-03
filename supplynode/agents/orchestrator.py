@@ -1,6 +1,8 @@
-import pandas as pd
-from typing import TypedDict, Dict, Any
+import os
+import json
 import anthropic
+from datetime import datetime
+from typing import TypedDict, Dict, Any
 from supplynode.utils.config import ANTHROPIC_API_KEY
 from langgraph.graph import StateGraph, END
 from ..engine import compute_all_kpi
@@ -60,7 +62,7 @@ def generate_alert(state: SupplyNodeState) -> str:
         A plain-language alert string in 4-part format:
         SITUATION / ROOT CAUSE / ACTION / IMPACT
     """
-    client = anthropic.Client(api_key=ANTHROPIC_API_KEY)
+    client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
     prompt = f"""You are SupplyNode, an AI supply chain analyst for an Indian SME.
 
     Analyze the following inventory risk findings and generate a concise alert
@@ -93,11 +95,43 @@ def generate_alert(state: SupplyNodeState) -> str:
 
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens = 300,
+        max_tokens = 400,
         messages = [{"role": "user", "content": prompt}]
     )
 
     return response.content[0].text
+
+def save_alert(state: SupplyNodeState) -> str:
+    """
+    Save the full SupplyNode alert output to a timestamped JSON file.
+
+    Creates the outputs/alerts/ directory if it does not exist.
+    Saves all engine findings, composite risk score, and final alert
+    as a structured JSON file for audit trail purposes.
+
+    Args:
+        state: The final SupplyNodeState after all nodes have run.
+
+    Returns:
+        The file path of the saved JSON alert file.
+    """
+    os.makedirs("outputs/alerts", exist_ok=True)
+    output = {
+        "timestamp": datetime.now().isoformat(),
+        "risk_score": state["composite_risk_score"],
+        "final_alert": state["final_alert"],
+        "stockout_findings": state["stockout_findings"],
+        "deadstock_findings": state["deadstock_findings"],
+        "reorder_findings": state["reorder_findings"],
+    }
+    filename = f"outputs/alerts/alert_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+
+    with open(filename, "w") as f:
+        json.dump(output, f, indent=2, default=str)
+
+    print(f"[SupplyNode] Alert saved: {filename}")
+    return filename
+
 
 def node_kpi(state: SupplyNodeState) -> SupplyNodeState:
     """
@@ -164,7 +198,7 @@ def node_orchestrator(state: SupplyNodeState) -> SupplyNodeState:
         state["reorder_findings"]
     )
     state["final_alert"] = generate_alert(state)
-    state["alert_metadata"] = {} # Implemented in commit 4
+    state["alert_metadata"] = {}  # V2 - add timestamp, model version, token count etc
     return state
 
 # Build and compile the LangGraph agent graph
