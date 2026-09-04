@@ -20,4 +20,5 @@ __all__ = ["compute_days_of_supply",
     "compute_order_fill_rate_pct",
     "compute_forecast_accuracy",
     "compute_eoq",
-    "compute_all_kpi"]
+    "compute_all_kpi"
+]
