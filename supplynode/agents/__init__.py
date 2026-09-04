@@ -6,7 +6,8 @@ from .orchestrator import (SupplyNodeState,
                            node_stockout, 
                            node_deadstock, 
                            node_reorder, 
-                           node_orchestrator
+                           node_orchestrator,
+                           save_alert
 )
 
 __all__ = ["stockout_prevention",
@@ -17,5 +18,6 @@ __all__ = ["stockout_prevention",
             "node_stockout",
             "node_deadstock",
             "node_reorder",
-            "node_orchestrator"
+            "node_orchestrator",
+            "save_alert"
 ]
