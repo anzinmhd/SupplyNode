@@ -8,3 +8,6 @@ langchain-core
 openpyxl
 python-dotenv
 pytest
+SQLAlchemy
+psycopg2-binary
+alembic
