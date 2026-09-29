@@ -1,7 +1,7 @@
 import os
 import pytest
 import pandas as pd
-from supplynode.data import read_inventory_data
+from supplynode.data import read_inventory_data, read_inventory_data_db
 
 FILE_PATH = os.path.join(
     os.path.dirname(__file__), # tests/directory
@@ -50,3 +50,40 @@ def test_required_columns_exists():
     assert "supplier_id" in suppliers_data.columns
     assert "reliability_score" in suppliers_data.columns
     assert "quantity_sold" in sales_history_data.columns
+
+def test_db_returns_three_dataframes():
+    inventory, suppliers, sales_history = read_inventory_data_db()
+
+    assert isinstance(inventory, pd.DataFrame)
+    assert isinstance(suppliers, pd.DataFrame)
+    assert isinstance(sales_history, pd.DataFrame)
+
+def test_db_row_counts():
+    inventory, suppliers, sales_history = read_inventory_data_db()
+
+    assert len(inventory) == 5
+    assert len(suppliers) == 3
+    assert len(sales_history) == 150
+
+def test_db_column_structure():
+    excel_inventory, excel_suppliers, excel_sales = read_inventory_data(
+        "supplynode/data/sample_data.xlsx"
+    )
+
+    db_inventory, db_suppliers, db_sales = read_inventory_data_db()
+
+    assert db_inventory.columns.tolist() == excel_inventory.columns.tolist()
+    assert db_suppliers.columns.tolist() == excel_suppliers.columns.tolist()
+    assert db_sales.columns.tolist() == excel_sales.columns.tolist()
+
+def test_db_dtypes():
+    inventory, suppliers, sales_history = read_inventory_data_db()
+
+    assert inventory["current_stock"].dtype == "int64"
+    assert inventory["unit_cost"].dtype == "float64"
+
+    assert suppliers["avg_lead_time_days"].dtype == "int64"
+    assert suppliers["reliability_score"].dtype == "float64"
+
+    assert sales_history["quantity_sold"].dtype == "int64"
+    assert sales_history["unit_price"].dtype == "float64"

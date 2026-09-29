@@ -1,3 +1,6 @@
-from .loader import read_inventory_data
+from .loader import read_inventory_data, read_inventory_data_db
 
-__all__ = ["read_inventory_data"]
+__all__ = [
+    "read_inventory_data",
+    "read_inventory_data_db"
+]
