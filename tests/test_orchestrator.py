@@ -1,7 +1,7 @@
 import pytest
 import json
 from pathlib import Path
-from supplynode.agents.orchestrator import compute_composite_risk_score, save_alert, app
+from supplynode.agents.orchestrator import compute_composite_risk_score, save_alert_json, app
 
 
 @pytest.fixture
@@ -61,7 +61,7 @@ def test_save_alert(tmp_path, monkeypatch, test_state):
     # Make the function use the temporary directory
     monkeypatch.chdir(tmp_path)
 
-    filename = save_alert(test_state)
+    filename = save_alert_json(test_state)
 
     # Check file exists
     assert Path(filename).exists()
