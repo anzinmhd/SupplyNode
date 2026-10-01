@@ -3,6 +3,10 @@ import warnings
 import pandas as pd
 from typing import Tuple
 
+from sqlalchemy import text
+
+from supplynode.utils.db import SessionLocal
+
 
 
 def read_inventory_data(file_path: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -68,3 +72,41 @@ def read_inventory_data(file_path: str) -> Tuple[pd.DataFrame, pd.DataFrame, pd.
         raise
     except Exception as e:
         raise RuntimeError(f"Error reading inventory data: {e}") from e
+
+def read_inventory_data_db() -> Tuple[
+    pd.DataFrame,
+    pd.DataFrame,
+    pd.DataFrame,
+]:
+    """
+    Reads inventory, supplier, and sales history data
+    from PostgreSQL and returns them as pandas DataFrames.
+    """
+
+    session = SessionLocal()
+
+    try:
+        inventory_data = pd.read_sql(
+            text("SELECT * FROM inventory"),
+            session.bind,
+        )
+
+        suppliers_data = pd.read_sql(
+            text("SELECT * FROM suppliers"),
+            session.bind,
+        )
+
+        sales_history_data = pd.read_sql(
+            text("SELECT * FROM sales_history"),
+            session.bind,
+        )
+
+        return inventory_data, suppliers_data, sales_history_data
+
+    except Exception as e:
+        raise RuntimeError(
+            f"Error reading inventory data from PostgreSQL: {e}"
+        ) from e
+
+    finally:
+        session.close()
